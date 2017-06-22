@@ -28,6 +28,9 @@ app.use(session({
   saveUninitialized: false
 }));
 
+let users = [{username: "isaachardy", password: "password"}];
+let messages = [];
+
 // "/" Endpoint
 app.get("/", function(req, res) {
   if (req.session.username) {
@@ -42,7 +45,32 @@ app.get("/login", function(req, res) {
 });
 
 app.post("/login", function(req, res) {
-  req.session.username = req.body.username;
+  let loggedUser;
+  messages = [];
+
+  users.forEach(function(user){
+    if (user.username === req.body.username) {
+      loggedUser = user;
+    }
+  });
+
+  req.checkBody("username", "Please Enter a valid username.").notEmpty().isLength({min: 6, max: 20});
+  req.checkBody("password", "Please Enter a Password.").notEmpty();
+  req.checkBody("password", "Invalid password and username combination.").equals(loggedUser.password);
+
+  let errors = req.validationErrors();
+
+  if (errors) {
+    errors.forEach(function(error) {
+      messages.push(error.msg);
+    });
+    res.render("login", {errors: messages});
+  } else {
+
+    req.session.username = req.body.username;
+
+    res.redirect("/user");
+  }
 
   res.redirect("/user");
 });
